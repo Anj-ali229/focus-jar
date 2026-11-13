@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus Jar</title>
+  
+  <!-- Inline CSS Stylesheet -->
+  <style>
+    /* Reset & CSS variables for light/dark theme colors */
+    :root {
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --secondary: #e5e7eb;
+      --secondary-hover: #d1d5db;
+      --accent-glow: rgba(79, 70, 229, 0.15);
+      --jar-border: #3b82f6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+
+    /* Main Container Card */
+    .container {
+      background: var(--card-bg);
+      border-radius: 2rem;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Application Title & Subtitle */
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.025em;
+      margin-bottom: 0.25rem;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    /* Stylized Focus Jar Graphic Container */
+    .jar-wrapper {
+      position: relative;
+      width: 220px;
+      height: 240px;
+      margin: 0 auto 2rem;
+      background: rgba(59, 130, 246, 0.03);
+      border: 4px solid var(--jar-border);
+      border-radius: 1.5rem 1.5rem 2.5rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 0 15px rgba(59, 130, 246, 0.1);
+      overflow: hidden;
+    }
+
+    /* Jar Lid Visual */
+    .jar-wrapper::before {
+      content: "";
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 12px;
+      background-color: #60a5fa;
+      border-radius: 6px 6px 0 0;
+    }
+
+    /* Liquid fill representing timer progress */
+    .jar-fill {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+      opacity: 0.25;
+      transition: height 1s linear;
+      z-index: 1;
+    }
+
+    /* Big Prominent Countdown Display */
+    .timer-display {
+      font-size: 4rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-main);
+      position: relative;
+      z-index: 2;
+      user-select: none;
+    }
+
+    /* Action Buttons Container */
+    .controls {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    /* Base Button Styles */
+    .btn {
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding: 0.85rem 2rem;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      outline: none;
+      flex: 1;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Primary Action Button (Start/Pause) */
+    .btn-primary {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
+
+    /* Secondary Action Button (Reset) */
+    .btn-secondary {
+      background-color: var(--secondary);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--secondary-hover);
+    }
+
+    /* Mode Selector Container */
+    .mode-controls {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+      background: #f3f4f6;
+      padding: 0.35rem;
+      border-radius: 9999px;
+    }
+
+    /* Mode Selection Button */
+    .btn-mode {
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+
+    .btn-mode.active {
+      background-color: var(--card-bg);
+      color: var(--primary);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Custom Duration Input Row */
+    .custom-durations {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .duration-field {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 9999px;
+      padding: 0.4rem 0.85rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: border-color 0.2s;
+    }
+
+    .duration-field:focus-within {
+      border-color: var(--primary);
+    }
+
+    .duration-field input {
+      width: 54px;
+      border: none;
+      background: transparent;
+      text-align: right;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+      outline: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Demo Speed Checkbox Control */
+    .demo-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .demo-control input {
+      accent-color: var(--primary);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* Task List Container & Styling */
+    .task-section {
+      margin-top: 2rem;
+      border-top: 1px solid #f3f4f6;
+      padding-top: 1.5rem;
+      text-align: left;
+    }
+
+    .task-section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.75rem;
+    }
+
+    .task-input-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .task-input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .task-input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-add {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .btn-add:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .task-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0.8rem;
+      background: #f9fafb;
+      border-radius: 0.75rem;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+
+    .task-item:hover {
+      background: #f3f4f6;
+    }
+
+    .task-text {
+      cursor: pointer;
+      flex: 1;
+      margin-right: 0.5rem;
+      word-break: break-word;
+      transition: color 0.2s, text-decoration 0.2s;
+    }
+
+    .task-item.completed .task-text {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0 0.4rem;
+      line-height: 1;
+      border-radius: 0.25rem;
+      transition: color 0.2s;
+    }
+
+    .btn-delete:hover {
+      color: #ef4444;
+    }
+
+    /* Marble Jar Collection Section */
+    .marble-section {
+      margin-top: 2rem;
+      border-top: 1px solid #f3f4f6;
+      padding-top: 1.5rem;
+      text-align: center;
+    }
+
+    .marble-section h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.75rem;
+    }
+
+    /* Today vs All-Time Stats Pill Row */
+    .marble-stats {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    .stat-badge {
+      flex: 1;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 1rem;
+      padding: 0.6rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-badge.today {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.15rem;
+    }
+
+    .stat-badge.today .stat-label {
+      color: var(--primary);
+    }
+
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-main);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-badge.today .stat-value {
+      color: var(--primary);
+    }
+
+    /* CSS Collection Jar */
+    .marble-jar {
+      position: relative;
+      width: 140px;
+      height: 150px;
+      margin: 0 auto;
+      border: 4px solid #93c5fd;
+      border-top: none;
+      border-radius: 0 0 1.5rem 1.5rem;
+      background: rgba(239, 246, 255, 0.5);
+      display: flex;
+      flex-wrap: wrap-reverse;
+      align-content: flex-start;
+      justify-content: center;
+      gap: 4px;
+      padding: 8px;
+      overflow: hidden;
+      box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Rim / Lip for lower CSS Jar */
+    .marble-jar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -8px;
+      right: -8px;
+      height: 8px;
+      background: #93c5fd;
+      border-radius: 4px;
+    }
+
+    /* Individual Marble Styling */
+    .marble {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #93c5fd, #64748b);
+      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.15);
+      animation: dropMarble 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Highlighted Marble Earned Today */
+    .marble.today {
+      background: radial-gradient(circle at 30% 30%, #a5b4fc, #4f46e5);
+      box-shadow: inset -2px -2px 4px rgba(0, 0, 0, 0.2), 0 0 6px rgba(79, 70, 229, 0.35);
+    }
+
+    @keyframes dropMarble {
+      0% {
+        transform: translateY(-100px) scale(0.5);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Subtle non-blocking notification toast */
+    .toast-notification {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background-color: var(--text-main);
+      color: #ffffff;
+      padding: 0.85rem 1.5rem;
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast-notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main Focus Jar UI Shell -->
+  <main class="container">
+    <header>
+      <h1>Focus Jar</h1>
+      <p class="subtitle">Fill your jar with focused time</p>
+    </header>
+
+    <!-- Mode Selector Buttons -->
+    <div class="mode-controls">
+      <button id="focusModeBtn" class="btn-mode active" onclick="setMode('focus')">Focus 25</button>
+      <button id="breakModeBtn" class="btn-mode" onclick="setMode('break')">Break 5</button>
+    </div>
+
+    <!-- Custom Focus & Break Duration Inputs -->
+    <div class="custom-durations">
+      <label class="duration-field" for="customFocusInput">
+        <span>Focus (m)</span>
+        <input
+          type="number"
+          id="customFocusInput"
+          min="1"
+          max="180"
+          value="25"
+          onchange="updateCustomDuration('focus')"
+        />
+      </label>
+      <label class="duration-field" for="customBreakInput">
+        <span>Break (m)</span>
+        <input
+          type="number"
+          id="customBreakInput"
+          min="1"
+          max="180"
+          value="5"
+          onchange="updateCustomDuration('break')"
+        />
+      </label>
+    </div>
+
+    <!-- Demo Speed Checkbox -->
+    <label class="demo-control">
+      <input type="checkbox" id="demoSpeedCheckbox" onchange="toggleDemoSpeed()" />
+      <span>Demo speed (1s = 1min)</span>
+    </label>
+
+    <!-- Visual Jar with Countdown Display -->
+    <div class="jar-wrapper" aria-live="polite">
+      <div id="jarFill" class="jar-fill"></div>
+      <div id="timerDisplay" class="timer-display">25:00</div>
+    </div>
+
+    <!-- Timer Control Buttons -->
+    <section class="controls">
+      <button id="startBtn" class="btn btn-primary" onclick="toggleTimer()">Start</button>
+      <button id="resetBtn" class="btn btn-secondary" onclick="resetTimer()">Reset</button>
+    </section>
+
+    <!-- Task List Section -->
+    <section class="task-section">
+      <h2>Tasks</h2>
+      <form class="task-input-group" onsubmit="addTask(event)">
+        <input type="text" id="taskInput" class="task-input" placeholder="Add a task..." autocomplete="off" />
+        <button type="submit" class="btn-add">Add</button>
+      </form>
+      <ul id="taskList" class="task-list"></ul>
+    </section>
+
+    <!-- Marble Collection Jar Section -->
+    <section class="marble-section">
+      <h2>Completed Focus Sessions</h2>
+      <div class="marble-stats">
+        <div class="stat-badge today">
+          <span class="stat-label">Today</span>
+          <span id="todayCounter" class="stat-value">0</span>
+        </div>
+        <div class="stat-badge">
+          <span class="stat-label">All-Time</span>
+          <span id="allTimeCounter" class="stat-value">0</span>
+        </div>
+      </div>
+      <div id="marbleJar" class="marble-jar"></div>
+    </section>
+  </main>
+
+  <!-- Non-blocking Toast Banner -->
+  <div id="toastBanner" class="toast-notification" role="status" aria-live="assertive"></div>
+
+  <!-- JavaScript Timer Logic -->
+  <script>
+    // Timer state variables
+    let currentMode = 'focus'; // 'focus' or 'break'
+    let focusMinutes = 25;     // Custom focus duration in minutes
+    let breakMinutes = 5;      // Custom break duration in minutes
+    let totalSeconds = focusMinutes * 60;
+    let timeRemaining = totalSeconds;
+    let timerInterval = null;
+    let isRunning = false;
+    let completedFocusSessions = 0;
+    let todayFocusSessions = 0;
+    let lastSessionDate = '';
+    let isDemoSpeed = false;
+    let tasks = []; // Array to store task objects: { id, text, completed }
+    let audioCtx = null; // Web Audio API Context instance
+    let toastTimeout = null;
+
+    // DOM Element References
+    const timerDisplay = document.getElementById('timerDisplay');
+    const startBtn = document.getElementById('startBtn');
+    const jarFill = document.getElementById('jarFill');
+    const focusModeBtn = document.getElementById('focusModeBtn');
+    const breakModeBtn = document.getElementById('breakModeBtn');
+    const customFocusInput = document.getElementById('customFocusInput');
+    const customBreakInput = document.getElementById('customBreakInput');
+    const marbleJar = document.getElementById('marbleJar');
+    const todayCounter = document.getElementById('todayCounter');
+    const allTimeCounter = document.getElementById('allTimeCounter');
+    const toastBanner = document.getElementById('toastBanner');
+
+    /**
+     * Returns local calendar date string in YYYY-MM-DD format
+     */
+    function getTodayDateString() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Updates the Today and All-Time counter displays
+     */
+    function updateSessionCounters() {
+      todayCounter.textContent = todayFocusSessions;
+      allTimeCounter.textContent = completedFocusSessions;
+    }
+
+    /**
+     * Initializes or resumes the Web Audio API AudioContext safely on user interaction
+     */
+    function initAudioContext() {
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+          }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      } catch (e) {
+        // Ignore if audio is unsupported in environment
+      }
+    }
+
+    /**
+     * Synthesizes a 4-note ascending major chime (C5 -> E5 -> G5 -> C6) on session completion
+     */
+    function playCompletionChime() {
+      try {
+        initAudioContext();
+        if (!audioCtx) return;
+
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        const now = audioCtx.currentTime;
+
+        notes.forEach((freq, index) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + index * 0.14);
+
+          gain.gain.setValueAtTime(0.001, now + index * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.22, now + index * 0.14 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.14 + 0.65);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now + index * 0.14);
+          osc.stop(now + index * 0.14 + 0.7);
+        });
+      } catch (e) {
+        // Fail silently if audio playback is blocked
+      }
+    }
+
+    /**
+     * Displays a non-blocking toast notification at the bottom of the screen
+     */
+    function showNotification(message) {
+      toastBanner.textContent = message;
+      toastBanner.classList.add('show');
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastBanner.classList.remove('show');
+      }, 4000);
+    }
+
+    /**
+     * Formats seconds into MM:SS format
+     */
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    /**
+     * Renders task list DOM elements from tasks array using safe textContent
+     */
+    function renderTasks() {
+      const taskList = document.getElementById('taskList');
+      taskList.innerHTML = '';
+
+      tasks.forEach((task) => {
+        const li = document.createElement('li');
+        li.className = `task-item ${task.completed ? 'completed' : ''}`;
+
+        const span = document.createElement('span');
+        span.className = 'task-text';
+        span.textContent = task.text;
+        span.onclick = () => toggleTask(task.id);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-delete';
+        deleteBtn.textContent = '×';
+        deleteBtn.setAttribute('aria-label', 'Delete task');
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteTask(task.id);
+        };
+
+        li.appendChild(span);
+        li.appendChild(deleteBtn);
+        taskList.appendChild(li);
+      });
+    }
+
+    /**
+     * Updates the DOM countdown display, page title, and jar liquid fill height
+     */
+    function updateUI() {
+      timerDisplay.textContent = formatTime(timeRemaining);
+      document.title = `(${formatTime(timeRemaining)}) Focus Jar`;
+
+      const percentage = totalSeconds > 0 ? (timeRemaining / totalSeconds) * 100 : 0;
+      jarFill.style.height = `${percentage}%`;
+    }
+
+    /**
+     * Toggles demo speed mode (60x speed: 1 second = 1 minute of timer)
+     */
+    function toggleDemoSpeed() {
+      const checkbox = document.getElementById('demoSpeedCheckbox');
+      isDemoSpeed = checkbox.checked;
+
+      if (isRunning) {
+        clearInterval(timerInterval);
+        runTimerInterval();
+      }
+    }
+
+    /**
+     * Switches between 'focus' and 'break' modes and updates UI
+     */
+    function setMode(mode) {
+      pauseTimer();
+      currentMode = mode;
+
+      if (mode === 'focus') {
+        totalSeconds = focusMinutes * 60;
+        focusModeBtn.classList.add('active');
+        breakModeBtn.classList.remove('active');
+      } else {
+        totalSeconds = breakMinutes * 60;
+        breakModeBtn.classList.add('active');
+        focusModeBtn.classList.remove('active');
+      }
+
+      timeRemaining = totalSeconds;
+      updateUI();
+    }
+
+    /**
+     * Toggles between starting and pausing the timer
+     */
+    function toggleTimer() {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    }
+
+    /**
+     * Executes timer countdown interval logic and triggers completion sound + marble drop
+     */
+    function runTimerInterval() {
+      const intervalMs = isDemoSpeed ? 1000 / 60 : 1000;
+
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        updateUI();
+
+        if (timeRemaining <= 0) {
+          pauseTimer();
+          playCompletionChime();
+
+          if (currentMode === 'focus') {
+            addMarble();
+            showNotification('Focus session completed! A marble was added to your jar.');
+          } else {
+            showNotification('Break finished! Ready to focus?');
+          }
+        }
+      }, intervalMs);
+    }
+
+    /**
+     * Starts the countdown tick & switches Start button label to Pause
+     */
+    function startTimer() {
+      if (timeRemaining <= 0) return;
+
+      initAudioContext();
+      isRunning = true;
+      startBtn.textContent = 'Pause';
+      startBtn.classList.remove('btn-primary');
+      startBtn.classList.add('btn-secondary');
+
+      runTimerInterval();
+    }
+
+    /**
+     * Saves tasks, custom durations, and today/all-time session counts to localStorage
+     */
+    function saveData() {
+      try {
+        localStorage.setItem('focusJarTasks', JSON.stringify(tasks));
+        localStorage.setItem('focusJarSessions', completedFocusSessions.toString());
+        localStorage.setItem('focusJarTodaySessions', todayFocusSessions.toString());
+        localStorage.setItem('focusJarLastDate', lastSessionDate || getTodayDateString());
+        localStorage.setItem('focusJarFocusMinutes', focusMinutes.toString());
+        localStorage.setItem('focusJarBreakMinutes', breakMinutes.toString());
+      } catch (e) {
+        // Ignore storage quota or private mode restrictions
+      }
+    }
+
+    /**
+     * Loads tasks, session counts (with daily auto-reset), and custom durations from localStorage
+     */
+    function loadData() {
+      try {
+        // Load saved custom Focus & Break durations
+        const savedFocus = parseInt(localStorage.getItem('focusJarFocusMinutes'), 10);
+        if (!isNaN(savedFocus) && savedFocus >= 1 && savedFocus <= 180) {
+          focusMinutes = savedFocus;
+        }
+
+        const savedBreak = parseInt(localStorage.getItem('focusJarBreakMinutes'), 10);
+        if (!isNaN(savedBreak) && savedBreak >= 1 && savedBreak <= 180) {
+          breakMinutes = savedBreak;
+        }
+
+        customFocusInput.value = focusMinutes;
+        customBreakInput.value = breakMinutes;
+        focusModeBtn.textContent = `Focus ${focusMinutes}`;
+        breakModeBtn.textContent = `Break ${breakMinutes}`;
+
+        // Initialize timer to loaded Focus duration
+        totalSeconds = focusMinutes * 60;
+        timeRemaining = totalSeconds;
+
+        // Load saved all-time & today marble counts with daily rollover check
+        const todayStr = getTodayDateString();
+        const savedSessions = localStorage.getItem('focusJarSessions');
+        const savedTodaySessions = localStorage.getItem('focusJarTodaySessions');
+        const savedDate = localStorage.getItem('focusJarLastDate');
+
+        completedFocusSessions = savedSessions !== null ? (parseInt(savedSessions, 10) || 0) : 0;
+
+        if (savedDate === todayStr && savedTodaySessions !== null) {
+          todayFocusSessions = Math.min(completedFocusSessions, parseInt(savedTodaySessions, 10) || 0);
+        } else {
+          todayFocusSessions = 0;
+        }
+        lastSessionDate = todayStr;
+
+        updateSessionCounters();
+
+        // Render all-time marbles in the jar, highlighting today's marbles
+        const previousCount = Math.max(0, completedFocusSessions - todayFocusSessions);
+        marbleJar.innerHTML = '';
+        for (let i = 0; i < completedFocusSessions; i++) {
+          const marble = document.createElement('div');
+          marble.className = i >= previousCount ? 'marble today' : 'marble';
+          // Disable drop animation for pre-loaded marbles on initial page render
+          marble.style.animation = 'none';
+          marbleJar.appendChild(marble);
+        }
+
+        // Load saved tasks
+        const savedTasks = localStorage.getItem('focusJarTasks');
+        if (savedTasks) {
+          tasks = JSON.parse(savedTasks);
+          renderTasks();
+        }
+      } catch (e) {
+        tasks = [];
+      }
+    }
+
+    /**
+     * Clamps, updates, and persists custom Focus or Break duration inputs (1-180 min)
+     */
+    function updateCustomDuration(type) {
+      if (type === 'focus') {
+        let val = parseInt(customFocusInput.value, 10);
+        if (isNaN(val)) val = 25;
+        val = Math.max(1, Math.min(180, val));
+        focusMinutes = val;
+        customFocusInput.value = val;
+        focusModeBtn.textContent = `Focus ${focusMinutes}`;
+
+        if (currentMode === 'focus') {
+          pauseTimer();
+          totalSeconds = focusMinutes * 60;
+          timeRemaining = totalSeconds;
+          updateUI();
+        }
+      } else if (type === 'break') {
+        let val = parseInt(customBreakInput.value, 10);
+        if (isNaN(val)) val = 5;
+        val = Math.max(1, Math.min(180, val));
+        breakMinutes = val;
+        customBreakInput.value = val;
+        breakModeBtn.textContent = `Break ${breakMinutes}`;
+
+        if (currentMode === 'break') {
+          pauseTimer();
+          totalSeconds = breakMinutes * 60;
+          timeRemaining = totalSeconds;
+          updateUI();
+        }
+      }
+
+      saveData();
+    }
+
+    /**
+     * Adds a marble to the CSS jar, increments today & all-time counts, and saves to localStorage
+     */
+    function addMarble() {
+      const todayStr = getTodayDateString();
+      if (lastSessionDate !== todayStr) {
+        todayFocusSessions = 0;
+        lastSessionDate = todayStr;
+        // Demote previous days' marbles visually if midnight passed while tab stayed open
+        marbleJar.querySelectorAll('.marble.today').forEach((el) => el.classList.remove('today'));
+      }
+
+      completedFocusSessions++;
+      todayFocusSessions++;
+      updateSessionCounters();
+
+      const marble = document.createElement('div');
+      marble.className = 'marble today';
+      marbleJar.appendChild(marble);
+
+      saveData();
+    }
+
+    /**
+     * Pauses the countdown tick & switches Pause button label back to Start
+     */
+    function pauseTimer() {
+      isRunning = false;
+      clearInterval(timerInterval);
+      startBtn.textContent = 'Start';
+      startBtn.classList.remove('btn-secondary');
+      startBtn.classList.add('btn-primary');
+    }
+
+    /**
+     * Resets the timer back to initial duration for the current mode
+     */
+    function resetTimer() {
+      pauseTimer();
+      timeRemaining = totalSeconds;
+      updateUI();
+    }
+
+    /**
+     * Adds a new task to tasks array and saves to localStorage
+     */
+    function addTask(event) {
+      event.preventDefault();
+      const input = document.getElementById('taskInput');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      const newTask = {
+        id: Date.now(),
+        text: text,
+        completed: false
+      };
+
+      tasks.push(newTask);
+      renderTasks();
+      saveData();
+
+      input.value = '';
+    }
+
+    /**
+     * Toggles completed status of a task and updates storage
+     */
+    function toggleTask(id) {
+      tasks = tasks.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+      renderTasks();
+      saveData();
+    }
+
+    /**
+     * Deletes a task from array and updates storage
+     */
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      renderTasks();
+      saveData();
+    }
+
+    // Initialize UI and restore saved state on page load
+    loadData();
+    updateUI();
+  </script>
+</body>
+</html>
